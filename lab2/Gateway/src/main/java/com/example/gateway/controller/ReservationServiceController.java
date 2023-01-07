@@ -7,10 +7,12 @@ import com.example.request1.requests.ReturnBook;
 import com.example.request1.requests.TakeBook;
 import com.example.request1.requests.UnavalableAnswer;
 import com.example.reservationservice.model.Reservation;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -22,8 +24,25 @@ import java.util.*;
 
 @Controller
 @Slf4j
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/reservations")
 public class ReservationServiceController {
+    private static Integer maxCountErr = 8;
+    private final TaskScheduler scheduler;
+    private Integer countErr = 0;
+    private final Runnable healthCheck =
+            new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        RestTemplate restTemplate = new RestTemplate();
+                        restTemplate.getForEntity("http://reservation:8070/manage/health", ResponseEntity.class);
+                        countErr = 0;
+                    } catch (Exception e) {
+                        scheduler.schedule(this, new Date(System.currentTimeMillis() + 10000L));
+                    }
+                }
+            };
     public static final String reservation_url = "http://reservation:8070/api/v1/reservations";
     Reservation mainReservation;
     @PostMapping
@@ -34,6 +53,10 @@ public class ReservationServiceController {
         Reservation result = null;
         HashMap<String, Object> output = new HashMap<>();
         try {
+            if(countErr >= maxCountErr){
+                scheduler.schedule(healthCheck, new Date(System.currentTimeMillis() + 10000L));
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new UnavalableAnswer("Reservation Service unavailable"));
+            } else {
             result = restTemplate.postForObject(reservation_url + "?username=" + username, request, Reservation.class);
             mainReservation = result;
 
@@ -66,7 +89,10 @@ public class ReservationServiceController {
             output.put("book", book1);
             output.put("library", lib1);
             output.put("rating", raiting);
+            if (result != null) countErr= 0;
+            }
         } catch (Exception exception) {
+            countErr = countErr + 1;
             log.error(exception.getMessage(), exception);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new UnavalableAnswer("Reservation Service unavailable"));
         }
@@ -83,6 +109,10 @@ public class ReservationServiceController {
         List<HashMap<String, Object>> answer = new ArrayList<>();
 
         try {
+            if(countErr >= maxCountErr){
+                scheduler.schedule(healthCheck, new Date(System.currentTimeMillis() + 10000L));
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new UnavalableAnswer("Reservation Service unavailable"));
+            } else {
             result = restTemplate.getForObject(url, List.class);
             Books book = restTemplate.getForObject("http://library:8060/api/v1/libraries/getBook" + "?libraryUid=" + mainReservation.getLibraryUid() + "&bookUid=" + mainReservation.getBookUid(), Books.class);//result.get(0)
             HashMap<String, Object> book1 = new HashMap<>();
@@ -106,7 +136,10 @@ public class ReservationServiceController {
             output.put("book", book1);
             output.put("library", lib1);
             answer.add(output);
+            if (result != null) countErr= 0;
+            }
         } catch (Exception exception) {
+            countErr = countErr + 1;
             log.error(exception.getMessage(), exception);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new UnavalableAnswer("Reservation Service unavailable"));
         }
@@ -124,8 +157,19 @@ public class ReservationServiceController {
         HttpEntity<ReturnBook> request = new HttpEntity<>(returnBookRequest, null);
         try {
         return restTemplate.postForEntity(reservation_url + "/" + reservationUid + "/return" + "?username=" + username, request, ReturnBook.class);
-        } catch (HttpStatusCodeException e) {
-            return ResponseEntity.badRequest().body(e.getResponseBodyAsString());
+        } catch (Exception exception) {
+            scheduler.schedule(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                restTemplate.postForEntity(reservation_url + "/" + reservationUid + "/return" + "?username=" + username, request, ReturnBook.class);
+                            } catch (Exception exception1) {
+                                scheduler.schedule(this, new Date(System.currentTimeMillis() + 10000L));
+                            }
+                        }
+                    }, new Date());
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
     }
 
