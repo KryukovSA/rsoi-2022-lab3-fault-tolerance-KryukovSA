@@ -1,5 +1,6 @@
 package com.example.gateway.controller;
 
+import com.example.request1.requests.UnavalableAnswer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +29,7 @@ public class RatingGatewayController {
             raiting.put("stars", result);
         } catch (Exception exception) {
             log.error(exception.getMessage(), exception);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Rating Service unavailable");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new UnavalableAnswer("Rating Service unavailable"));
         }
         return ResponseEntity.ok(raiting);
     }
