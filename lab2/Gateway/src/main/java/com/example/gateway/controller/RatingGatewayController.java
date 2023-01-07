@@ -26,11 +26,12 @@ public class RatingGatewayController {
         Integer result = null;
         try {
             result = restTemplate.getForObject(url, Integer.class);
-            raiting.put("stars", result);
+
         } catch (Exception exception) {
             log.error(exception.getMessage(), exception);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new UnavalableAnswer("Rating Service unavailable"));
         }
+        raiting.put("stars", result);
         return ResponseEntity.ok(raiting);
     }
 

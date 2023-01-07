@@ -5,6 +5,7 @@ import com.example.libraryservice.model.Library;
 import com.example.ratingservice.model.Rating;
 import com.example.request1.requests.ReturnBook;
 import com.example.request1.requests.TakeBook;
+import com.example.request1.requests.UnavalableAnswer;
 import com.example.reservationservice.model.Reservation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -67,7 +68,7 @@ public class ReservationServiceController {
             output.put("rating", raiting);
         } catch (Exception exception) {
             log.error(exception.getMessage(), exception);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Reservation Service unavailable");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new UnavalableAnswer("Reservation Service unavailable"));
         }
         return ResponseEntity.ok(output);
     }
@@ -107,7 +108,7 @@ public class ReservationServiceController {
             answer.add(output);
         } catch (Exception exception) {
             log.error(exception.getMessage(), exception);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Reservation Service unavailable");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new UnavalableAnswer("Reservation Service unavailable"));
         }
         return ResponseEntity.ok(answer);
     }
