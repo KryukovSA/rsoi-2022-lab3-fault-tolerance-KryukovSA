@@ -16,12 +16,17 @@ public class RatingGatewayController {
     public static final String ratingUrl = "http://rating:8050/api/v1/rating";
 
     @GetMapping
-    public ResponseEntity<HashMap> getUserRating(@RequestHeader("X-User-Name") String username) {
+    public ResponseEntity<?> getUserRating(@RequestHeader("X-User-Name") String username) {
         RestTemplate restTemplate = new RestTemplate();
         String url = ratingUrl + "?username=" + username;
-        Integer result = restTemplate.getForObject(url, Integer.class);
         HashMap<String, Integer> raiting = new HashMap<>();
-        raiting.put("stars", result);
+        Integer result = null;
+        try {
+            result = restTemplate.getForObject(url, Integer.class);
+            raiting.put("stars", result);
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Rating Service unavailable");
+        }
         return ResponseEntity.ok(raiting);
     }
 
