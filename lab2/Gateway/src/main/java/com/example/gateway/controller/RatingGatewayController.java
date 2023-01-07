@@ -1,5 +1,6 @@
 package com.example.gateway.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -9,6 +10,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 
 @Controller
+@Slf4j
 @RequestMapping("/api/v1/rating")
 public class RatingGatewayController {
 
@@ -25,6 +27,7 @@ public class RatingGatewayController {
             result = restTemplate.getForObject(url, Integer.class);
             raiting.put("stars", result);
         } catch (Exception exception) {
+            log.error(exception.getMessage(), exception);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Rating Service unavailable");
         }
         return ResponseEntity.ok(raiting);
