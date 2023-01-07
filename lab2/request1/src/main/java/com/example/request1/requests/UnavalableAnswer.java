@@ -9,9 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UnavalableAnswer
 {
-    public UnavalableAnswer(String message) {
-        this.message = message;
-    }
     private String message;
-    private String details;
 }
