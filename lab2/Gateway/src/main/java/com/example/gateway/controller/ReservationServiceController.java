@@ -24,41 +24,45 @@ public class ReservationServiceController {
     public static final String reservation_url = "http://reservation:8070/api/v1/reservations";
     Reservation mainReservation;
     @PostMapping
-    public ResponseEntity<HashMap> takeBook(@RequestHeader("X-User-Name") String username,
+    public ResponseEntity<?> takeBook(@RequestHeader("X-User-Name") String username,
                                       @RequestBody TakeBook takeBookRequest) {
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<TakeBook> request = new HttpEntity<>(takeBookRequest, null);
         Reservation result = restTemplate.postForObject(reservation_url + "?username=" + username, request, Reservation.class);
         mainReservation = result;
-        Books book = restTemplate.getForObject("http://library:8060/api/v1/libraries/getBook" + "?libraryUid=" + result.getLibraryUid() + "&bookUid=" + result.getBookUid(), Books.class);
-        HashMap<String, Object> book1 = new HashMap<>();
-        book1.put("bookUid", book.getBookUid());
-        book1.put("name", book.getName());
-        book1.put("author", book.getAuthor());
-        book1.put("genre", book.getGenre());
-
-        Library lib = restTemplate.getForObject("http://library:8060/api/v1/libraries/getLib" + "?libraryUid=" + result.getLibraryUid(), Library.class);
-        HashMap<String, Object> lib1 = new HashMap<>();
-        lib1.put("libraryUid", lib.getLibraryUid());
-        lib1.put("name", lib.getName());
-        lib1.put("address", lib.getAddress());
-        lib1.put("city", lib.getCity());
-
-        Integer rating = restTemplate.getForObject("http://rating:8050/api/v1/rating" + "?username=" + result.getUsername(), Integer.class);
-        HashMap<String, Integer> raiting = new HashMap<>();
-        raiting.put("stars", rating);
-
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-
         HashMap<String, Object> output = new HashMap<>();
-        output.put("reservationUid", result.getReservationUid());
-        output.put("status", result.getStatus());
-        output.put("startDate", df.format(result.getStartDate()));
-        output.put("tillDate", df.format(result.getTillDate()));
-        output.put("book", book1);
-        output.put("library", lib1);
-        output.put("rating", raiting);
+        try {
+            Books book = restTemplate.getForObject("http://library:8060/api/v1/libraries/getBook" + "?libraryUid=" + result.getLibraryUid() + "&bookUid=" + result.getBookUid(), Books.class);
+            HashMap<String, Object> book1 = new HashMap<>();
+            book1.put("bookUid", book.getBookUid());
+            book1.put("name", book.getName());
+            book1.put("author", book.getAuthor());
+            book1.put("genre", book.getGenre());
 
+            Library lib = restTemplate.getForObject("http://library:8060/api/v1/libraries/getLib" + "?libraryUid=" + result.getLibraryUid(), Library.class);
+            HashMap<String, Object> lib1 = new HashMap<>();
+            lib1.put("libraryUid", lib.getLibraryUid());
+            lib1.put("name", lib.getName());
+            lib1.put("address", lib.getAddress());
+            lib1.put("city", lib.getCity());
+
+            Integer rating = restTemplate.getForObject("http://rating:8050/api/v1/rating" + "?username=" + result.getUsername(), Integer.class);
+            HashMap<String, Integer> raiting = new HashMap<>();
+            raiting.put("stars", rating);
+
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+
+
+            output.put("reservationUid", result.getReservationUid());
+            output.put("status", result.getStatus());
+            output.put("startDate", df.format(result.getStartDate()));
+            output.put("tillDate", df.format(result.getTillDate()));
+            output.put("book", book1);
+            output.put("library", lib1);
+            output.put("rating", raiting);
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Reservation Service unavailable");
+        }
         return ResponseEntity.ok(output);
     }
 
@@ -71,31 +75,32 @@ public class ReservationServiceController {
 
         List<HashMap<String, Object>> answer = new ArrayList<>();
 
+        try {
+            Books book = restTemplate.getForObject("http://library:8060/api/v1/libraries/getBook" + "?libraryUid=" + mainReservation.getLibraryUid() + "&bookUid=" + mainReservation.getBookUid(), Books.class);//result.get(0)
+            HashMap<String, Object> book1 = new HashMap<>();
+            book1.put("bookUid", book.getBookUid());
+            book1.put("name", book.getName());
+            book1.put("author", book.getAuthor());
+            book1.put("genre", book.getGenre());
 
-        Books book = restTemplate.getForObject("http://library:8060/api/v1/libraries/getBook" + "?libraryUid=" + mainReservation.getLibraryUid() + "&bookUid=" + mainReservation.getBookUid(), Books.class);//result.get(0)
-        HashMap<String, Object> book1 = new HashMap<>();
-        book1.put("bookUid", book.getBookUid());
-        book1.put("name", book.getName());
-        book1.put("author", book.getAuthor());
-        book1.put("genre", book.getGenre());
-
-        Library lib = restTemplate.getForObject("http://library:8060/api/v1/libraries/getLib" + "?libraryUid=" + mainReservation.getLibraryUid(), Library.class);
-        HashMap<String, Object> lib1 = new HashMap<>();
-        lib1.put("libraryUid", lib.getLibraryUid());
-        lib1.put("name", lib.getName());
-        lib1.put("address", lib.getAddress());
-        lib1.put("city", lib.getCity());
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        HashMap<String, Object> output = new HashMap<>();
-        output.put("reservationUid", mainReservation.getReservationUid());
-        output.put("status", mainReservation.getStatus());
-        output.put("startDate", df.format(mainReservation.getStartDate()));
-        output.put("tillDate", df.format(mainReservation.getTillDate()));
-        output.put("book", book1);
-        output.put("library", lib1);
-
-        answer.add(output);
-
+            Library lib = restTemplate.getForObject("http://library:8060/api/v1/libraries/getLib" + "?libraryUid=" + mainReservation.getLibraryUid(), Library.class);
+            HashMap<String, Object> lib1 = new HashMap<>();
+            lib1.put("libraryUid", lib.getLibraryUid());
+            lib1.put("name", lib.getName());
+            lib1.put("address", lib.getAddress());
+            lib1.put("city", lib.getCity());
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            HashMap<String, Object> output = new HashMap<>();
+            output.put("reservationUid", mainReservation.getReservationUid());
+            output.put("status", mainReservation.getStatus());
+            output.put("startDate", df.format(mainReservation.getStartDate()));
+            output.put("tillDate", df.format(mainReservation.getTillDate()));
+            output.put("book", book1);
+            output.put("library", lib1);
+            answer.add(output);
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Reservation Service unavailable");
+        }
         return ResponseEntity.ok(answer);
     }
 
