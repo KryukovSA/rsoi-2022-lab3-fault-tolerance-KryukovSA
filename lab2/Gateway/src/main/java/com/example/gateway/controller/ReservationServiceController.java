@@ -28,10 +28,13 @@ public class ReservationServiceController {
                                       @RequestBody TakeBook takeBookRequest) {
         RestTemplate restTemplate = new RestTemplate();
         HttpEntity<TakeBook> request = new HttpEntity<>(takeBookRequest, null);
-        Reservation result = restTemplate.postForObject(reservation_url + "?username=" + username, request, Reservation.class);
-        mainReservation = result;
+        Reservation result = null;
         HashMap<String, Object> output = new HashMap<>();
         try {
+            result = restTemplate.postForObject(reservation_url + "?username=" + username, request, Reservation.class);
+            mainReservation = result;
+
+
             Books book = restTemplate.getForObject("http://library:8060/api/v1/libraries/getBook" + "?libraryUid=" + result.getLibraryUid() + "&bookUid=" + result.getBookUid(), Books.class);
             HashMap<String, Object> book1 = new HashMap<>();
             book1.put("bookUid", book.getBookUid());
@@ -70,12 +73,13 @@ public class ReservationServiceController {
     public ResponseEntity<?> getUserReservedBooks(@RequestHeader("X-User-Name") String username) {
         RestTemplate restTemplate = new RestTemplate();
         String url = reservation_url + "?username=" + username;
-        List<Reservation> result = new ArrayList<Reservation>();
-        result = restTemplate.getForObject(url, List.class);
+        List<Reservation> result = null;
+
 
         List<HashMap<String, Object>> answer = new ArrayList<>();
 
         try {
+            result = restTemplate.getForObject(url, List.class);
             Books book = restTemplate.getForObject("http://library:8060/api/v1/libraries/getBook" + "?libraryUid=" + mainReservation.getLibraryUid() + "&bookUid=" + mainReservation.getBookUid(), Books.class);//result.get(0)
             HashMap<String, Object> book1 = new HashMap<>();
             book1.put("bookUid", book.getBookUid());
