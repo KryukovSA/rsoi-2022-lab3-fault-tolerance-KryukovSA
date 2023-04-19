@@ -9,12 +9,57 @@ services:
       POSTGRES_PASSWORD: "postgres"
       POSTGRES_DB: postgres
     volumes:
-      - db-data:/var/lib/postgresql/data
-      - ./postgres/:/docker-entrypoint-initdb.d/
+       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
 
-# TODO добавить сервисы
+
+  # TODO добавить сервисы
+  gateway:
+    build:
+      context: lab2/Gateway
+    container_name: gateway
+    #    image: gateway
+    #    build: ./lab2/Gateway/
+    depends_on:
+      - reservation
+      - library
+      - rating
+    ports:
+      - "8080:8080"
+
+  reservation:
+    build:
+      context: lab2/ReservationService
+    container_name: reservation
+    depends_on:
+      - postgres
+    #    image: reservationservice
+    #    build: ./lab2/ReservationService/
+    ports:
+      - "8070:8070"
+
+  library:
+    build:
+      context: lab2/LibraryService
+    container_name: library
+    depends_on:
+      - postgres
+    #    image: library
+    #    build: ./lab2/LibraryService/
+    ports:
+      - "8060:8060"
+
+  rating:
+    build:
+      context: lab2/RatingService
+    container_name: rating
+    depends_on:
+      - postgres
+    #    image: rating
+    #    build: ./lab2/RatingService/
+    ports:
+      - "8050:8050"
 
 volumes:
   db-data:
